@@ -55,16 +55,28 @@ class MainActivity : ComponentActivity() {
 
             val extras = intent.extras
             if (extras != null) {
-                val items = mutableListOf<PollItem>()
-                val decodedItems = JSONArray(extras.getString("items"))
+                try {
+                    val items = mutableListOf<PollItem>()
+                    val decodedItems = JSONArray(extras.getString("items"))
 
-                for (i in 0 until decodedItems.length()) {
-                    val item = decodedItems.getString(i)
-                    items.add(Question(pollViewModel, item))
+                    for (i in 0 until decodedItems.length()) {
+                        val item = decodedItems.getString(i)
+                        items.add(Question(pollViewModel, item))
+                    }
+                    items.add(EndPoll(pollViewModel))
+
+                    createPoll(pollViewModel, items)
+                } catch (e: Exception) {
+                    createPoll(
+                        pollViewModel,
+                        listOf(
+                            Question(pollViewModel, "Вас устроил вкус кофе?"),
+                            Question(pollViewModel, "Соответсвует ли цена нашему кофе?"),
+                            Question(pollViewModel, "Хорошая ли подача?"),
+                            EndPoll(pollViewModel)
+                        )
+                    )
                 }
-                items.add(EndPoll(pollViewModel))
-
-                createPoll(pollViewModel, items)
             } else {
                 createPoll(
                     pollViewModel,

@@ -13,3 +13,5 @@ val Pink40 = Color(0xFF7D5260)
 val backgroudColor = Color(0xFFEBF2FF)
 val greenBackgroundColor = Color(0xFF54FF54)
 val redBackgroundColor = Color(0xFFFF6666)
+
+val primaryTextColor = Color(0xFF80AEFF)

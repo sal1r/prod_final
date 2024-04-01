@@ -1,5 +1,6 @@
 package com.example.swipecsat.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FractionalThreshold
 import androidx.compose.material.rememberSwipeableState
@@ -32,15 +34,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.swipecsat.R
 import com.example.swipecsat.models.EndPoll
 import com.example.swipecsat.models.Question
 import com.example.swipecsat.ui.theme.backgroudColor
 import com.example.swipecsat.ui.theme.greenBackgroundColor
+import com.example.swipecsat.ui.theme.primaryTextColor
 import com.example.swipecsat.ui.theme.redBackgroundColor
 import com.example.swipecsat.viewmodels.PollViewModel
 import kotlinx.coroutines.launch
@@ -104,23 +111,26 @@ fun PollScreen(pollViewModel: PollViewModel) {
     ) {
         val currentItem = currentPoll!!.items[currentItemIndex!!]
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            verticalArrangement = Arrangement.Bottom,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "${if(currentItemIndex!! < currentPoll!!.items.size - 1) currentItemIndex!! + 1
-                          else currentPoll!!.items.size - 1}" +
-                        "/${currentPoll!!.items.size - 1}",
-                textAlign = TextAlign.Center,
-                fontSize = MaterialTheme.typography.displayMedium.fontSize,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(64.dp))
+        if (swipable) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(256.dp),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "${if(currentItemIndex!! < currentPoll!!.items.size - 1) currentItemIndex!! + 1
+                    else currentPoll!!.items.size - 1}" +
+                            "/${currentPoll!!.items.size - 1}",
+                    textAlign = TextAlign.Center,
+                    fontSize = MaterialTheme.typography.displayMedium.fontSize,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(64.dp))
+            }
         }
+
         Box(
             modifier = Modifier
                 .then(swipeableModifier)
@@ -139,53 +149,66 @@ fun PollScreen(pollViewModel: PollViewModel) {
                 }
             }
         }
-        Spacer(modifier = Modifier.weight(1f))
     }
 }
 
 @Composable
 fun QuestionCard(pollViewModel: PollViewModel, text: String) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp, 0.dp)
-            .background(
-                MaterialTheme.colorScheme.primaryContainer,
-                MaterialTheme.shapes.large
-            )
-            .padding(16.dp, 64.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.fillMaxSize()
     ) {
-        Text(
-            text,
-            fontSize = MaterialTheme.typography.titleLarge.fontSize,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(64.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(3f)
+                .padding(16.dp, 0.dp)
+                .background(
+                    MaterialTheme.colorScheme.primaryContainer,
+                    MaterialTheme.shapes.large
+                )
+                .padding(16.dp, 64.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                text,
+                fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                textAlign = TextAlign.Center
+            )
             Spacer(modifier = Modifier.weight(1f))
-            Button(
-                modifier = Modifier.weight(2f),
-                onClick = {
-                pollViewModel.sendAnswer("Yes")
-                pollViewModel.nextItem()
-            }) {
-                Text("Да")
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Свайп вправо - да ",
+                    fontSize = 30.sp,
+                    color = primaryTextColor
+                )
+                Image(
+                    modifier = Modifier.size(36.dp),
+                    painter = painterResource(R.drawable.arrow_right),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(primaryTextColor)
+                )
             }
-            Spacer(modifier = Modifier.weight(1f))
-            Button(
-                modifier = Modifier.weight(2f),
-                onClick = {
-                pollViewModel.sendAnswer("No")
-                pollViewModel.nextItem()
-            }) {
-                Text("Нет")
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    modifier = Modifier.size(36.dp),
+                    painter = painterResource(R.drawable.arrow_left),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(primaryTextColor)
+                )
+                Text(
+                    " Свайп влево - нет",
+                    fontSize = 30.sp,
+                    color = primaryTextColor
+                )
             }
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(32.dp))
         }
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
 
