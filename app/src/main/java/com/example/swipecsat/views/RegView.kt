@@ -68,13 +68,15 @@ fun RegistrationScreen(viewModel: PollViewModel) {
                         age = it.filter { it.isDigit() }
                     }
                 },
+                maxLines = 1,
                 label = { Text(text = "Возраст") },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     textColor = MaterialTheme.colorScheme.onBackground,
                     unfocusedBorderColor = MaterialTheme.colorScheme.onBackground,
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedLabelColor = MaterialTheme.colorScheme.onBackground,
-                    focusedLabelColor = MaterialTheme.colorScheme.primary
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.onBackground
                 ),
             )
             Spacer(modifier = Modifier.height(32.dp))

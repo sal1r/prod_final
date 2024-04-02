@@ -12,9 +12,13 @@ fun createPoll(
 
 data class Poll(val items: List<PollItem>)
 
-data class Question(
+data class SimpleQuestion(
     private val viewModel: PollViewModel,
     val text: String
+) : PollItem(viewModel)
+
+data class DetailQuestion(
+    private val viewModel: PollViewModel,
 ) : PollItem(viewModel)
 
 data class EndPoll(

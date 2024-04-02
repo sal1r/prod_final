@@ -1,6 +1,5 @@
 package com.example.swipecsat.views
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -19,6 +18,8 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FractionalThreshold
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.rememberSwipeableState
 import androidx.compose.material.swipeable
 import androidx.compose.material3.Button
@@ -34,7 +35,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -42,22 +42,22 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.swipecsat.R
+import com.example.swipecsat.models.DetailQuestion
 import com.example.swipecsat.models.EndPoll
-import com.example.swipecsat.models.Question
+import com.example.swipecsat.models.SimpleQuestion
 import com.example.swipecsat.ui.theme.backgroudColor
 import com.example.swipecsat.ui.theme.greenBackgroundColor
 import com.example.swipecsat.ui.theme.primaryTextColor
 import com.example.swipecsat.ui.theme.redBackgroundColor
+import com.example.swipecsat.ui.theme.secondaryTextColor
 import com.example.swipecsat.viewmodels.PollViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -133,8 +133,8 @@ fun PollScreen(pollViewModel: PollViewModel) {
             ) {
                 Text(
                     text = "${if(currentItemIndex!! < currentPoll!!.items.size - 1) currentItemIndex!! + 1
-                    else currentPoll!!.items.size - 1}" +
-                            "/${currentPoll!!.items.size - 1}",
+                    else pollViewModel.questionsCount.value!!}" +
+                            "/${pollViewModel.questionsCount.value!!}",
                     textAlign = TextAlign.Center,
                     fontSize = MaterialTheme.typography.displayMedium.fontSize,
                     fontWeight = FontWeight.Bold
@@ -151,12 +151,21 @@ fun PollScreen(pollViewModel: PollViewModel) {
 //                .alpha(1f - abs(swipeOffset) / swipeLimit / 1.5f)
         ) {
             when (currentItem) {
-                is Question -> {
-                    QuestionCard(pollViewModel, currentItem.text)
+                is SimpleQuestion -> {
+                    SimpleQuestionCard(pollViewModel, currentItem.text)
                     LaunchedEffect(currentItem) {
                         coroutineScope.launch {
                             swipable = true
                             showCounter = true
+                        }
+                    }
+                }
+                is DetailQuestion -> {
+                    DetailQuestionCard(pollViewModel)
+                    LaunchedEffect(currentItem) {
+                        coroutineScope.launch {
+                            swipable = false
+                            showCounter = false
                         }
                     }
                 }
@@ -175,7 +184,7 @@ fun PollScreen(pollViewModel: PollViewModel) {
 }
 
 @Composable
-fun QuestionCard(pollViewModel: PollViewModel, text: String) {
+fun SimpleQuestionCard(pollViewModel: PollViewModel, text: String) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -294,10 +303,12 @@ fun EndPollCard(pollViewModel: PollViewModel) {
                 )
             ) {
                 Text(
-                    modifier = Modifier.background(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.shapes.small
-                    ).padding(4.dp, 0.dp),
+                    modifier = Modifier
+                        .background(
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.shapes.small
+                        )
+                        .padding(4.dp, 0.dp),
                     text = "34TRF7",
                     fontSize = MaterialTheme.typography.bodyLarge.fontSize
                 )
@@ -305,20 +316,92 @@ fun EndPollCard(pollViewModel: PollViewModel) {
         )
 
         Text(
-            modifier = Modifier.fillMaxWidth().padding(16.dp, 0.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp, 0.dp),
             text = annotatedText,
             inlineContent = inlineContentMap,
             fontSize = MaterialTheme.typography.bodyLarge.fontSize
         )
-
-//        Text(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(16.dp, 0.dp),
-//            text = "Спасибо что уделили нам время, ваше мнение очень важно для нас!" +
-//                    " Вот ваш промокод на скидку 10%: ",
-//            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
-//        )
         Spacer(modifier = Modifier.height(64.dp))
+    }
+}
+
+@Composable
+fun DetailQuestionCard(viewModel: PollViewModel) {
+    var answer by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp, 32.dp)
+            .background(
+                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.shapes.large
+            )
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Поделитесь своим мнением",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = MaterialTheme.typography.titleLarge.fontSize,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Вы можете оставить свои пожелания и поделиться своим опытом пользования нашими услугами в форме ниже",
+            color = secondaryTextColor,
+            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(64.dp))
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth().padding(16.dp, 0.dp),
+            value = answer,
+            onValueChange = { answer = it },
+            maxLines = 12,
+            minLines = 12,
+            label = { Text(text = "Ваше мнение") },
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                textColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedBorderColor = MaterialTheme.colorScheme.onBackground,
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onBackground,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                cursorColor = MaterialTheme.colorScheme.onBackground
+            ),
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Row(
+            modifier = Modifier.padding(16.dp, 0.dp)
+        ) {
+            Button(
+                modifier = Modifier.background(
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.shapes.medium
+                ),
+                onClick = { viewModel.sendDetailAnswer(answer) }
+            ) {
+                Text(
+                    text = "Отправить",
+                    color = MaterialTheme.colorScheme.background
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            Button(
+                modifier = Modifier.background(
+                    MaterialTheme.colorScheme.primary,
+                    MaterialTheme.shapes.medium
+                ),
+                onClick = { viewModel.nextItem() }
+            ) {
+                Text(
+                    text = "Пропустить",
+                    color = MaterialTheme.colorScheme.background
+                )
+            }
+        }
     }
 }

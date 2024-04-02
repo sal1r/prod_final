@@ -8,6 +8,10 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
 import kotlin.random.Random
 
 const val CHANNEL_ID = "channel"
@@ -36,6 +40,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val productName = message.data["product_name"] ?: ""
 
         pollIntent.putExtra("productName", productName)
+//        pollIntent.putExtra("test", message.data.toString())
 
         val pendingIntent = PendingIntent.getActivity(this, 0, pollIntent,
             PendingIntent.FLAG_IMMUTABLE)
@@ -46,6 +51,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             .setSmallIcon(R.drawable.notification_alarm)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
             .build()
 
         nManager.notify(Random.nextInt(), nBuilder)
@@ -53,5 +59,22 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val sp = getSharedPreferences("regData", MODE_PRIVATE)
+
+            val client = okhttp3.OkHttpClient()
+
+            val body = okhttp3.RequestBody
+                .create("application/json".toMediaType(),
+                    "{\"id\": \"$token\", \"gender\": \"${sp.getString("gender", "")}\", \"age\": ${sp.getInt("age", 0)}}")
+
+            val request = okhttp3.Request.Builder()
+                .url("http://158.160.98.205:8000/api/user/register")
+                .post(body)
+                .build()
+
+            client.newCall(request).execute()
+        }
     }
 }

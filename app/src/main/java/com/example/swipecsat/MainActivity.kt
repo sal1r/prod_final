@@ -1,8 +1,7 @@
 package com.example.swipecsat
 
-import android.app.Application
 import android.os.Bundle
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,22 +10,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
-import com.example.swipecsat.models.EndPoll
-import com.example.swipecsat.models.PollItem
-import com.example.swipecsat.models.Question
-import com.example.swipecsat.models.createPoll
 import com.example.swipecsat.ui.theme.SwipeCSATTheme
 import com.example.swipecsat.viewmodels.PollViewModel
 import com.example.swipecsat.views.PollScreen
 import com.example.swipecsat.views.RegistrationScreen
-import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import org.json.JSONArray
-import kotlin.random.Random
 
 
 class MainActivity : ComponentActivity() {
@@ -54,6 +41,8 @@ class MainActivity : ComponentActivity() {
 //            }
 
             val productName = intent.extras?.getString("productName")
+//            Toast.makeText(this, productName ?: "Товар", Toast.LENGTH_SHORT).show()
+//            Toast.makeText(this, intent.extras?.getString("test") ?: "", Toast.LENGTH_SHORT).show()
             pollViewModel.loadQuestions(productName ?: "Товар")
 
 
