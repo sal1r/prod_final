@@ -17,13 +17,21 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary = Color(0xFFB3A636),
     secondary = PurpleGrey80,
-    tertiary = Pink80
+    tertiary = Pink80,
+    background = backgroudColor,
+    primaryContainer = Color(0xFF1B1B1B),
+    onBackground = Color(0xFFE6E6E6),
+
+    onSurfaceVariant = Color(0xFFADBFCC),
+    outline = Color(0xFFADBFCC),
+    surface = Color(0xFF008EFF),
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF3377FF),
+//    primary = Color(0xFF3377FF),
+    primary = Color(0xFFB3A636),
     primaryContainer = Color(0xFFB3CFFF),
     onBackground = Color(0xFF0D0D0B),
     background = backgroudColor
@@ -41,16 +49,10 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun SwipeCSATTheme(
-    darkTheme: Boolean = false,
-    dynamicColor: Boolean = false,
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
@@ -58,7 +60,7 @@ fun SwipeCSATTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
+            window.statusBarColor = backgroudColor.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
         }
     }

@@ -1,15 +1,15 @@
 package com.example.swipecsat
 
+import android.app.Application
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.ViewModelProvider
 import com.example.swipecsat.models.EndPoll
 import com.example.swipecsat.models.PollItem
@@ -18,12 +18,16 @@ import com.example.swipecsat.models.createPoll
 import com.example.swipecsat.ui.theme.SwipeCSATTheme
 import com.example.swipecsat.viewmodels.PollViewModel
 import com.example.swipecsat.views.PollScreen
+import com.example.swipecsat.views.RegistrationScreen
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.MediaType
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import org.json.JSONArray
+import kotlin.random.Random
+
 
 class MainActivity : ComponentActivity() {
     private var appInitialized = false
@@ -33,60 +37,31 @@ class MainActivity : ComponentActivity() {
 
         val pollViewModel = ViewModelProvider(this)[PollViewModel::class.java]
 
-//        CoroutineScope(Dispatchers.IO).launch {
-//            val client = okhttp3.OkHttpClient()
-//
-//            val body = okhttp3.RequestBody
-//                .create("application/json".toMediaType(),
-//                    "{\"hashed_password\": \"123\", \"gender\": \"male\", \"age\": 10}")
-//
-//            val request = okhttp3.Request.Builder()
-//                .url("http://158.160.98.205:8000/api/register")
-//                .post(body)
-//                .build()
-//
-//            val response = client.newCall(request).execute()
-//            val bod = response.body?.string()
-//            Log.d("test", bod ?: "No body")
-//        }
-
         if (!appInitialized) {
             checkPermissions(this, applicationContext)
 
-            val extras = intent.extras
-            if (extras != null) {
-                try {
-                    val items = mutableListOf<PollItem>()
-                    val decodedItems = JSONArray(extras.getString("items"))
+//            val sp = getSharedPreferences("MySharedPref", MODE_PRIVATE)
+//            val spEdit = sp.edit()
+//
+//            var uId = sp.getString("uId", "")
+//
+//            if (uId != "") {
+//                pollViewModel.uId.value = uId
+//            } else {
+//                uId = Random(System.currentTimeMillis()).nextLong().toString()
+//                spEdit.putString("uId", uId)
+//                spEdit.apply()
+//            }
 
-                    for (i in 0 until decodedItems.length()) {
-                        val item = decodedItems.getString(i)
-                        items.add(Question(pollViewModel, item))
-                    }
-                    items.add(EndPoll(pollViewModel))
+            val productName = intent.extras?.getString("productName")
+            pollViewModel.loadQuestions(productName ?: "Товар")
 
-                    createPoll(pollViewModel, items)
-                } catch (e: Exception) {
-                    createPoll(
-                        pollViewModel,
-                        listOf(
-                            Question(pollViewModel, "Вас устроил вкус кофе?"),
-                            Question(pollViewModel, "Соответсвует ли цена нашему кофе?"),
-                            Question(pollViewModel, "Хорошая ли подача?"),
-                            EndPoll(pollViewModel)
-                        )
-                    )
-                }
-            } else {
-                createPoll(
-                    pollViewModel,
-                    listOf(
-                        Question(pollViewModel, "Вас устроил вкус кофе?"),
-                        Question(pollViewModel, "Соответсвует ли цена нашему кофе?"),
-                        Question(pollViewModel, "Хорошая ли подача?"),
-                        EndPoll(pollViewModel)
-                    )
-                )
+
+            val sp = getSharedPreferences("regData", MODE_PRIVATE)
+
+            val currentuId = sp.getString("uId", null)
+            if (currentuId != null) {
+                pollViewModel.uId.value = currentuId
             }
 
             appInitialized = true
@@ -98,7 +73,16 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PollScreen(pollViewModel)
+                    val currentPoll = pollViewModel.currentPoll.observeAsState()
+                    val uId = pollViewModel.uId.observeAsState()
+
+                    if (uId.value == null) {
+                        RegistrationScreen(pollViewModel)
+                    } else {
+                        if (currentPoll.value != null) {
+                            PollScreen(pollViewModel)
+                        }
+                    }
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.example.swipecsat.views
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FractionalThreshold
 import androidx.compose.material.rememberSwipeableState
@@ -33,13 +36,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.swipecsat.R
@@ -57,6 +66,7 @@ import kotlin.math.abs
 @Composable
 fun PollScreen(pollViewModel: PollViewModel) {
     var swipable by remember { mutableStateOf(true) }
+    var showCounter by remember { mutableStateOf(true) }
     var background by remember { mutableStateOf(backgroudColor) }
     val coroutineScope = rememberCoroutineScope()
     val swipeableState = rememberSwipeableState(0)
@@ -79,17 +89,14 @@ fun PollScreen(pollViewModel: PollViewModel) {
     LaunchedEffect(swipeableState.currentValue) {
         if (swipeableState.currentValue != 0) {
             pollViewModel.sendAnswer(when (swipeableState.currentValue) {
-                -1 -> "Да"
-                1 -> "Нет"
-                else -> ""
+                1 -> 1
+                else -> 0
             })
 
             coroutineScope.launch {
                 background = backgroudColor
                 swipeableState.animateTo(0)
             }
-
-            pollViewModel.nextItem()
         }
     }
 
@@ -98,6 +105,11 @@ fun PollScreen(pollViewModel: PollViewModel) {
         background =
             if (swipeOffset > 0) lerp(backgroudColor, greenBackgroundColor, fraction)
             else lerp(backgroudColor, redBackgroundColor, fraction)
+        if (pollViewModel.showHelper.value!!) {
+            if (swipeOffset != 0f) {
+                pollViewModel.showHelper.value = false
+            }
+        }
     }
 
     val currentItemIndex by pollViewModel.currentItemIndex.observeAsState()
@@ -111,7 +123,7 @@ fun PollScreen(pollViewModel: PollViewModel) {
     ) {
         val currentItem = currentPoll!!.items[currentItemIndex!!]
 
-        if (swipable) {
+        if (showCounter) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -135,17 +147,27 @@ fun PollScreen(pollViewModel: PollViewModel) {
             modifier = Modifier
                 .then(swipeableModifier)
                 .offset(swipeOffset.dp, 0.dp)
-                .rotate(30f * (swipeOffset / swipeLimit))
-                .alpha(1f - abs(swipeOffset) / swipeLimit / 2f)
+                .rotate(abs(swipeOffset) * swipeOffset / 7000f)
+//                .alpha(1f - abs(swipeOffset) / swipeLimit / 1.5f)
         ) {
             when (currentItem) {
                 is Question -> {
                     QuestionCard(pollViewModel, currentItem.text)
-                    swipable = true
+                    LaunchedEffect(currentItem) {
+                        coroutineScope.launch {
+                            swipable = true
+                            showCounter = true
+                        }
+                    }
                 }
                 is EndPoll -> {
                     EndPollCard(pollViewModel)
-                    swipable = false
+                    LaunchedEffect(currentItem) {
+                        coroutineScope.launch {
+                            swipable = false
+                            showCounter = false
+                        }
+                    }
                 }
             }
         }
@@ -174,39 +196,41 @@ fun QuestionCard(pollViewModel: PollViewModel, text: String) {
                 fontSize = MaterialTheme.typography.titleLarge.fontSize,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.weight(1f))
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Свайп вправо - да ",
-                    fontSize = 30.sp,
-                    color = primaryTextColor
-                )
-                Image(
-                    modifier = Modifier.size(36.dp),
-                    painter = painterResource(R.drawable.arrow_right),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(primaryTextColor)
-                )
+            if (pollViewModel.showHelper.value!!) {
+                Spacer(modifier = Modifier.weight(1f))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Свайп вправо - да",
+                        fontSize = 30.sp,
+                        color = primaryTextColor
+                    )
+                    Image(
+                        modifier = Modifier.size(36.dp),
+                        painter = painterResource(R.drawable.arrow_right),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(primaryTextColor)
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        modifier = Modifier.size(36.dp),
+                        painter = painterResource(R.drawable.arrow_left),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(primaryTextColor)
+                    )
+                    Text(
+                        " Свайп влево - нет",
+                        fontSize = 30.sp,
+                        color = primaryTextColor
+                    )
+                }
+                Spacer(modifier = Modifier.height(32.dp))
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    modifier = Modifier.size(36.dp),
-                    painter = painterResource(R.drawable.arrow_left),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(primaryTextColor)
-                )
-                Text(
-                    " Свайп влево - нет",
-                    fontSize = 30.sp,
-                    color = primaryTextColor
-                )
-            }
-            Spacer(modifier = Modifier.height(32.dp))
         }
         Spacer(modifier = Modifier.weight(1f))
     }
@@ -222,19 +246,79 @@ fun EndPollCard(pollViewModel: PollViewModel) {
                 MaterialTheme.colorScheme.primaryContainer,
                 MaterialTheme.shapes.large
             )
-            .padding(0.dp, 96.dp),
+            .padding(0.dp, 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             "Конец опроса",
-            fontSize = MaterialTheme.typography.titleLarge.fontSize,
+            fontSize = MaterialTheme.typography.displaySmall.fontSize,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .padding(8.dp, 0.dp)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            MaterialTheme.colorScheme.onBackground,
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Image(
+            modifier = Modifier.size(64.dp),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
+            painter = painterResource(R.drawable.heart),
+            contentDescription = null
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        val annotatedText = buildAnnotatedString {
+            append("Спасибо что уделили нам время, ваше мнение очень важно для нас!" +
+                    " Вот ваш промокод на скидку 10%: ")
+            appendInlineContent("promocode")
+        }
+
+        val inlineContentMap = mapOf(
+            "promocode" to InlineTextContent(
+                Placeholder(
+                    width = 104.sp,
+                    height = 24.sp,
+                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                )
+            ) {
+                Text(
+                    modifier = Modifier.background(
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.shapes.small
+                    ).padding(4.dp, 0.dp),
+                    text = "34TRF7",
+                    fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                )
+            }
+        )
+
         Text(
-            "Спасибо что поучастовали, ваше мнение очень важно для нас!",
-            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
-            textAlign = TextAlign.Center
+            modifier = Modifier.fillMaxWidth().padding(16.dp, 0.dp),
+            text = annotatedText,
+            inlineContent = inlineContentMap,
+            fontSize = MaterialTheme.typography.bodyLarge.fontSize
         )
+
+//        Text(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(16.dp, 0.dp),
+//            text = "Спасибо что уделили нам время, ваше мнение очень важно для нас!" +
+//                    " Вот ваш промокод на скидку 10%: ",
+//            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+//        )
+        Spacer(modifier = Modifier.height(64.dp))
     }
 }
