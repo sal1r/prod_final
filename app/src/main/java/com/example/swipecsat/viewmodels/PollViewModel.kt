@@ -86,7 +86,7 @@ class PollViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     questionsCount.value = 0
-                    createPoll(this@PollViewModel, listOf(DetailQuestion(this@PollViewModel), EndPoll(this@PollViewModel)))
+                    createPoll(this@PollViewModel, listOf(EndPoll(this@PollViewModel)))
                 }
             }
         }
